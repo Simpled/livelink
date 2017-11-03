@@ -35,13 +35,13 @@ async function main() {
   // options are: prompt individually / prefer sync folder item / prefer source
 
   const config = loadYamlConfig(rootDir);
+  const linkGroups = generateLinkGroups(rootDir, config);
 
-  Object.keys(config.items).forEach(name => {
-    const paths = config.items[name];
-    paths.forEach(bakPath => {
-      const resolvedPath = resolveFullPath(bakPath);
-      const linkFileName = filenamify(resolvedPath).toLowerCase();
-      logger.subtle(`${resolvedPath} -> ${linkFileName}`);
+  linkGroups.forEach(linkGroup => {
+    Object.keys(linkGroup.links).forEach(linkName => {
+      const targetPath = linkGroup.links[linkName];
+      const linkPath = path.join(linkGroup.syncDir, linkName);
+      logger.subtle(`${linkPath} -> ${targetPath}`);
     });
   });
 }
@@ -66,6 +66,26 @@ function loadYamlConfig(rootDir: string): LiveLinkConfig {
   }
 
   return yaml.load(yamlPath);
+}
+
+function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
+  const items = Object.keys(config.items).map(name => {
+    const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
+
+    const links = config.items[name].reduce((acc, bakPath) => {
+      const resolvedPath = resolveFullPath(bakPath);
+      const linkFileName = filenamify(resolvedPath).toLowerCase();
+
+      return {
+        ...acc,
+        [linkFileName]: resolvedPath,
+      };
+    }, {});
+
+    return { name, syncDir, links };
+  });
+
+  return items;
 }
 
 async function inquireRootDir() {
