@@ -4,19 +4,20 @@
   "private": true,
   "dependencies": {
     "@types/filenamify": "^2.0.1",
+    "@types/inquirer": "^0.0.35",
     "@types/yamljs": "^0.2.30",
     "clix-logger": "^1.0.0",
     "eazy-logger": "^3.0.2",
     "ee-log": "^2.0.4",
     "expand-tilde": "^2.0.2",
     "filenamify": "^2.0.0",
+    "inquirer": "^3.3.0",
     "loggy": "^1.0.2",
-    "yamljs": "^0.3.0",
-    "yargs": "^10.0.3"
+    "tildify": "^1.2.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/node": "^8.0.47",
-    "@types/yargs": "^8.0.2",
     "typescript": "^2.6.1"
   }
 }

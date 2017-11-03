@@ -28,7 +28,7 @@ declare module 'clix-logger' {
         color?: string;
         token?: string;
       }
-    }
+    };
   }
 
   function createLogger(options?: LoggerOptions): Logger;
@@ -39,4 +39,10 @@ declare module 'expand-tilde' {
   function expandTilde(path: string): string;
 
   export = expandTilde;
+}
+
+declare module 'tildify' {
+  function tildify(path: string): string;
+
+  export = tildify;
 }
