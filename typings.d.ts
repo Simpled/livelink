@@ -46,3 +46,16 @@ declare module 'tildify' {
 
   export = tildify;
 }
+
+declare module 'lnk' {
+  function lnk(
+    targets: string[],
+    directory: string,
+    options?: {
+      rename?: string;
+      type?: 'default' | 'hard' | 'symbolic' | 'junction' | 'directory';
+    },
+  ): Promise<any>;
+
+  export = lnk;
+}

@@ -12,6 +12,7 @@
     "expand-tilde": "^2.0.2",
     "filenamify": "^2.0.0",
     "inquirer": "^3.3.0",
+    "lnk": "^1.1.0",
     "loggy": "^1.0.2",
     "tildify": "^1.2.0",
     "yamljs": "^0.3.0"
