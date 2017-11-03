@@ -14,6 +14,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
+    "outDir": "dist",
     "pretty": true,
     "sourceMap": true,
     "strictNullChecks": true,
