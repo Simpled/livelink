@@ -48,8 +48,11 @@ async function main() {
   const linkGroups = generateLinkGroups(rootDir, config);
 
   for (let i = 0; i < linkGroups.length; i++) {
+    console.log();
     await processLinks(linkGroups[i]);
   }
+
+  console.log();
 }
 
 /* ============================================================================
@@ -103,6 +106,8 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
 }
 
 async function processLinks(group: LinkGroup) {
+  logger.subtle(`══════ ${group.name} ══════`);
+
   const linkNames = Object.keys(group.links);
 
   for (let i = 0; i < linkNames.length; i++) {
@@ -124,13 +129,11 @@ async function processLink(
   const stat = getStat(linkPath);
 
   if (stat) {
-    // link exists
-    console.log('LINK EXISTS');
+    // link or copy of data present at link location
     const isLinkSymbolic = stat.isSymbolicLink();
 
     if (isLinkSymbolic) {
       // link is a symbolic link
-      console.log('LINK IS SYMBOLIC');
       let currentTarget = fs.readlinkSync(linkPath);
 
       if (!path.isAbsolute(currentTarget)) {
@@ -140,7 +143,6 @@ async function processLink(
 
       if (currentTarget === targetPath) {
         // already links to the desired target
-        console.log('LINKED ALREADY, SKIP OVER!');
         skip = true;
       } else {
         // links to a different target than desired
@@ -155,23 +157,6 @@ async function processLink(
         );
       }
     } else {
-      console.log('LINK IS PHYSICAL FILE/FOLDER');
-      // link is a physical file or folder
-      // console.log(
-      //   'LINK IS PHYSICAL FILE/FOLDER',
-      //   `- Prompt the user about it. Options are:
-      // - ignore
-      // - ignore (apply to all)
-      // - copy to target location, and convert to link
-      // - copy to target location, and convert to link (apply to all)
-
-      //   if doing a "copy to target", and there is already a file/dir at the target prompt the user what to do: Options:
-      //   - ignore
-      //   - ignore (apply to all)
-      //   - replace
-      //   - replace (apply to all)`,
-      // );
-
       const linkAction = await inquireExistingSyncEntityAction(
         linkGroupName,
         linkPath,
@@ -181,13 +166,11 @@ async function processLink(
         linkAction === ChoiceOption.Replace ||
         linkAction === ChoiceOption.ReplaceAll
       ) {
-        // we're copying the entity at link location to the target,
-        // then replacing it with a symbolic link to the target
-        console.log('ENTITY AT LINK LOCATION IS TO BE COPIED TO TARGET');
+        // we're moving the entity at link location to the target location,
+        // then creating a symbolic link in place of it to the target
 
         if (fs.existsSync(targetPath)) {
-          console.log('THERE IS A FILE/DIR AT TARGET LOCATION ALREADY');
-          // but, there is already an entity at the target path
+          // but, there is already something at the target path
 
           const targetAction = await inquireExistingTargetEntityAction(
             linkGroupName,
@@ -198,25 +181,19 @@ async function processLink(
             targetAction === ChoiceOption.Replace ||
             targetAction === ChoiceOption.ReplaceAll
           ) {
-            console.log('RENAME THE ITEM AT TARGET LOCATION TO .BAK');
             fs.renameSync(targetPath, targetPath + '.livelink.original');
           } else {
             skip = true;
-            console.log('SKIP');
           }
         }
 
         if (!skip) {
-          console.log('COPY TO TARGET AND CREATE SYMBOLIC LINK');
           fs.moveSync(linkPath, targetPath);
         }
       } else {
         skip = true;
       }
     }
-  } else {
-    // link does not exist
-    console.log('LINK DOES NOT EXIST. CREATE IT!');
   }
 
   if (!skip) {
@@ -326,7 +303,5 @@ async function inquireExistingTargetEntityAction(
 }
 
 function printPreQuestionMessage(message: string) {
-  console.log('\n' + chalk.blueBright(message));
+  logger.print('\n' + chalk.blueBright(message));
 }
-
-// todo:mm: handle all console.log notes and remove them all!
