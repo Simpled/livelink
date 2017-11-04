@@ -156,6 +156,7 @@ async function processLink(
         );
       }
     } else {
+      console.log('LINK IS PHYSICAL FILE/FOLDER');
       // link is a physical file or folder
       // console.log(
       //   'LINK IS PHYSICAL FILE/FOLDER',
@@ -177,6 +178,32 @@ async function processLink(
         linkPath,
         targetPath,
       );
+
+      if (
+        [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
+          answers.linkPresentAction,
+        )
+      ) {
+        console.log('COPY TO TARGET AND CREATE SYMBOLIC LINK');
+        // we're copying the entity at link location to the target,
+        // then replacing it with a symbolic link to the target
+        if (fs.existsSync(targetPath)) {
+          console.log('THERE IS A FILE/DIR AT TARGET LOCATION ALREADY');
+          // but, there is already an entity at the target path
+          if (
+            answers.targetPresentAction &&
+            [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
+              answers.targetPresentAction,
+            )
+          ) {
+            console.log('KEEP A BACKUP AND REPLACE THE TARGET LOCATION ITEM');
+          }
+        }
+      }
+
+      if (fs.existsSync(targetPath)) {
+        //
+      }
 
       console.log('OK: ' + JSON.stringify(answers));
     }
