@@ -51,8 +51,6 @@ async function main() {
   for (let i = 0; i < linkGroups.length; i++) {
     await processLinks(linkGroups[i]);
   }
-
-  console.log(linkGroups);
 }
 
 /* ============================================================================
@@ -173,39 +171,44 @@ async function processLink(
       //   - replace (apply to all)`,
       // );
 
-      const answers = await inquireExistingSyncEntityAction(
+      const linkAction = await inquireExistingSyncEntityAction(
         linkGroupName,
         linkPath,
-        targetPath,
       );
 
       if (
-        [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
-          answers.linkPresentAction,
-        )
+        linkAction === ChoiceOption.Replace ||
+        linkAction === ChoiceOption.ReplaceAll
       ) {
-        console.log('COPY TO TARGET AND CREATE SYMBOLIC LINK');
         // we're copying the entity at link location to the target,
         // then replacing it with a symbolic link to the target
+        console.log('ENTITY AT LINK LOCATION IS TO BE COPIED TO TARGET');
+
+        let skip = false;
         if (fs.existsSync(targetPath)) {
           console.log('THERE IS A FILE/DIR AT TARGET LOCATION ALREADY');
           // but, there is already an entity at the target path
+
+          const targetAction = await inquireExistingTargetEntityAction(
+            linkGroupName,
+            targetPath,
+          );
+
           if (
-            answers.targetPresentAction &&
-            [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
-              answers.targetPresentAction,
-            )
+            targetAction === ChoiceOption.Replace ||
+            targetAction === ChoiceOption.ReplaceAll
           ) {
-            console.log('KEEP A BACKUP AND REPLACE THE TARGET LOCATION ITEM');
+            console.log('RENAME THE ITEM AT TARGET LOCATION TO .BAK');
+          } else {
+            skip = true;
+            console.log('SKIP');
           }
         }
-      }
 
-      if (fs.existsSync(targetPath)) {
-        //
+        if (!skip) {
+          console.log('COPY TO TARGET AND CREATE SYMBOLIC LINK');
+        }
       }
-
-      console.log('OK: ' + JSON.stringify(answers));
     }
   } else {
     // link does not exist
@@ -252,91 +255,79 @@ async function inquireRootDir() {
 async function inquireExistingSyncEntityAction(
   linkGroupName: string,
   linkPath: string,
-  targetPath: string,
 ) {
   const type = fs.statSync(linkPath).isDirectory() ? 'directory' : 'file';
 
   printPreQuestionMessage(oneLine`\u2139 There is already an actual ${type}
-  in place of the link for ${linkGroupName} in your sync directory:
-  ${tildify(linkPath)}.`);
+    in place of the link for ${linkGroupName} in your sync directory:
+    ${tildify(linkPath)}.`);
 
-  const answers = await inquirer.prompt([
-    {
-      name: 'linkPresentAction',
-      type: 'list',
-      // todo: mm: use either file or directory, smartly
-      message: `What would you like to do?`,
-      choices: [
-        {
-          name: 'Ignore',
-          value: ChoiceOption.Skip,
-        },
-        {
-          name: 'Ignore (apply to all)',
-          value: ChoiceOption.SkipAll,
-        },
-        {
-          name: 'Copy to target location, and convert to link',
-          value: ChoiceOption.Replace,
-        },
-        {
-          name: 'Copy to target location, and convert to link (apply to all)',
-          value: ChoiceOption.ReplaceAll,
-        },
-      ],
-    },
-    {
-      name: 'targetPresentAction',
-      message: 'What would you like to do?',
-      type: 'list',
-      choices: [
-        {
-          name: 'Skip',
-          value: ChoiceOption.Skip,
-        },
-        {
-          name: 'Skip (apply to all)',
-          value: ChoiceOption.SkipAll,
-        },
-        {
-          name: 'Replace target file/directory',
-          value: ChoiceOption.Replace,
-        },
-        {
-          name: 'Replace target file/directory (apply to all)',
-          value: ChoiceOption.ReplaceAll,
-        },
-      ],
-      when: answers => {
-        if (
-          [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
-            answers.linkPresentAction,
-          ) &&
-          fs.existsSync(targetPath)
-        ) {
-          let targetType = fs.statSync(targetPath).isDirectory()
-            ? 'directory'
-            : 'file';
-
-          printPreQuestionMessage(oneLine`\u2139 There is already a
-          ${targetType} in your target path: ${tildify(targetPath)}`);
-
-          return true;
-        }
-
-        return false;
+  const answers = await inquirer.prompt({
+    name: 'linkPresentAction',
+    type: 'list',
+    // todo: mm: use either file or directory, smartly
+    message: `What would you like to do?`,
+    choices: [
+      {
+        name: 'Ignore',
+        value: ChoiceOption.Skip,
       },
-    },
-  ]);
+      {
+        name: 'Ignore (apply to all)',
+        value: ChoiceOption.SkipAll,
+      },
+      {
+        name: 'Copy to target location, and convert to link',
+        value: ChoiceOption.Replace,
+      },
+      {
+        name: 'Copy to target location, and convert to link (apply to all)',
+        value: ChoiceOption.ReplaceAll,
+      },
+    ],
+  });
 
-  return answers as {
-    linkPresentAction: ChoiceOption;
-    targetPresentAction?: ChoiceOption;
-  };
+  return answers.linkPresentAction;
+}
+
+async function inquireExistingTargetEntityAction(
+  linkGroupName: string,
+  targetPath: string,
+) {
+  let targetType = fs.statSync(targetPath).isDirectory() ? 'directory' : 'file';
+
+  printPreQuestionMessage(oneLine`\u2139 There is already a
+    ${targetType} in your target path: ${tildify(targetPath)}`);
+
+  const answers = await inquirer.prompt({
+    name: 'action',
+    message: 'What would you like to do?',
+    type: 'list',
+    choices: [
+      {
+        name: 'Skip',
+        value: ChoiceOption.Skip,
+      },
+      {
+        name: 'Skip (apply to all)',
+        value: ChoiceOption.SkipAll,
+      },
+      {
+        name: 'Replace target file/directory',
+        value: ChoiceOption.Replace,
+      },
+      {
+        name: 'Replace target file/directory (apply to all)',
+        value: ChoiceOption.ReplaceAll,
+      },
+    ],
+  });
+
+  return answers.action;
 }
 
 function printPreQuestionMessage(message: string) {
-  console.log(chalk.blueBright(message));
+  console.log('\n' + chalk.blueBright(message));
 }
 
 // todo:mm: handle all console.log notes and remove them all!
