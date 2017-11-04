@@ -1,3 +1,5 @@
+import chalk from 'chalk';
+import { oneLine } from 'common-tags';
 import * as filenamify from 'filenamify';
 import * as fs from 'fs';
 import * as inquirer from 'inquirer';
@@ -105,11 +107,15 @@ async function processLinks(group: LinkGroup) {
     const linkPath = path.join(group.syncDir, linkName);
 
     logger.subtle(`${linkPath} -> ${targetPath}`);
-    await processLink(linkPath, targetPath);
+    await processLink(group.name, linkPath, targetPath);
   }
 }
 
-async function processLink(linkPath: string, targetPath: string) {
+async function processLink(
+  linkGroupName: string,
+  linkPath: string,
+  targetPath: string,
+) {
   const stat = getStat(linkPath);
 
   if (stat) {
@@ -144,20 +150,28 @@ async function processLink(linkPath: string, targetPath: string) {
       }
     } else {
       // link is a physical file or folder
-      console.log(
-        'LINK IS PHYSICAL FILE/FOLDER',
-        `- Prompt the user about it. Options are:
-      - ignore
-      - ignore (apply to all)
-      - copy to target location, and convert to link
-      - copy to target location, and convert to link (apply to all)
+      // console.log(
+      //   'LINK IS PHYSICAL FILE/FOLDER',
+      //   `- Prompt the user about it. Options are:
+      // - ignore
+      // - ignore (apply to all)
+      // - copy to target location, and convert to link
+      // - copy to target location, and convert to link (apply to all)
 
-        if doing a "copy to target", and there is already a file/dir at the target prompt the user what to do: Options:
-        - ignore
-        - ignore (apply to all)
-        - replace
-        - replace (apply to all)`,
+      //   if doing a "copy to target", and there is already a file/dir at the target prompt the user what to do: Options:
+      //   - ignore
+      //   - ignore (apply to all)
+      //   - replace
+      //   - replace (apply to all)`,
+      // );
+
+      const answer = await inquireExistingSyncEntityAction(
+        linkGroupName,
+        linkPath,
+        targetPath,
       );
+
+      console.log('OK: ' + answer);
     }
   } else {
     // link does not exist
@@ -200,6 +214,79 @@ async function inquireRootDir() {
   });
 
   return answers.rootDir;
+}
+
+async function inquireExistingSyncEntityAction(
+  linkGroupName: string,
+  linkPath: string,
+  targetPath: string,
+) {
+  const type = fs.statSync(linkPath).isDirectory() ? 'directory' : 'file';
+
+  printPreQuestionMessage(oneLine`\u2139 There is already an actual ${type}
+  in place of the link for ${linkGroupName} in your sync directory:
+  ${tildify(linkPath)}.`);
+
+  const answers = await inquirer.prompt([
+    {
+      name: 'action',
+      type: 'list',
+      // todo: mm: use either file or directory, smartly
+      message: `What would you like to do?`,
+      choices: [
+        {
+          name: 'Ignore',
+          value: 'IGNORE',
+        },
+        {
+          name: 'Ignore (apply to all)',
+          value: 'IGNORE_ALL',
+        },
+        {
+          name: 'Copy to target location, and convert to link',
+          value: 'COPY_CONVERT',
+        },
+        {
+          name: 'Copy to target location, and convert to link (apply to all)',
+          value: 'COPY_CONVERT_ALL',
+        },
+      ],
+    },
+    {
+      name: 'actionOnTargetConflict',
+      message: 'What would you like to do?',
+      type: 'list',
+      choices: [
+        'Skip',
+        'Skip (apply to all)',
+        'Replace target file/directory',
+        'Replace target file/directory (apply to all)',
+      ],
+      when: answers => {
+        if (
+          fs.existsSync(targetPath) &&
+          answers.action.indexOf('COPY_CONVERT') === 0
+        ) {
+          let targetType = fs.statSync(targetPath).isDirectory()
+            ? 'directory'
+            : 'file';
+
+          printPreQuestionMessage(oneLine`\u2139 There is already a
+          ${targetType} in your target path: ${tildify(targetPath)}`);
+
+          return true;
+        }
+
+        return false;
+      },
+    },
+  ]);
+
+  return answers.action;
+}
+
+function printPreQuestionMessage(message: string) {
+  console.log(chalk.blueBright(message));
 }
 
 // todo:mm: handle all console.log notes and remove them all!
