@@ -1,14 +1,13 @@
 import chalk from 'chalk';
 import { oneLine } from 'common-tags';
 import * as filenamify from 'filenamify';
-import * as fs from 'fs';
+import * as fs from 'fs-extra';
 import * as inquirer from 'inquirer';
 import * as path from 'path';
 import * as yaml from 'yamljs';
 import expandTilde = require('expand-tilde');
 import Logger = require('clix-logger');
 import tildify = require('tildify');
-import lnk = require('lnk');
 
 const logger = Logger({
   appendTime: false,
@@ -121,6 +120,7 @@ async function processLink(
   linkPath: string,
   targetPath: string,
 ) {
+  let skip = false;
   const stat = getStat(linkPath);
 
   if (stat) {
@@ -141,6 +141,7 @@ async function processLink(
       if (currentTarget === targetPath) {
         // already links to the desired target
         console.log('LINKED ALREADY, SKIP OVER!');
+        skip = true;
       } else {
         // links to a different target than desired
         console.log(
@@ -184,7 +185,6 @@ async function processLink(
         // then replacing it with a symbolic link to the target
         console.log('ENTITY AT LINK LOCATION IS TO BE COPIED TO TARGET');
 
-        let skip = false;
         if (fs.existsSync(targetPath)) {
           console.log('THERE IS A FILE/DIR AT TARGET LOCATION ALREADY');
           // but, there is already an entity at the target path
@@ -199,6 +199,7 @@ async function processLink(
             targetAction === ChoiceOption.ReplaceAll
           ) {
             console.log('RENAME THE ITEM AT TARGET LOCATION TO .BAK');
+            fs.renameSync(targetPath, targetPath + '.livelink.original');
           } else {
             skip = true;
             console.log('SKIP');
@@ -207,22 +208,20 @@ async function processLink(
 
         if (!skip) {
           console.log('COPY TO TARGET AND CREATE SYMBOLIC LINK');
+          fs.moveSync(linkPath, targetPath);
         }
+      } else {
+        skip = true;
       }
     }
   } else {
     // link does not exist
     console.log('LINK DOES NOT EXIST. CREATE IT!');
-
-    await createLink(linkPath, targetPath);
   }
-}
 
-async function createLink(linkPath: string, targetPath: string) {
-  await lnk([targetPath], path.dirname(linkPath), {
-    rename: path.basename(linkPath),
-    type: 'symbolic',
-  });
+  if (!skip) {
+    await fs.ensureSymlink(targetPath, linkPath);
+  }
 }
 
 async function inquireRootDir() {
@@ -277,11 +276,11 @@ async function inquireExistingSyncEntityAction(
         value: ChoiceOption.SkipAll,
       },
       {
-        name: 'Copy to target location, and convert to link',
+        name: 'Copy to target location, and replace with a link',
         value: ChoiceOption.Replace,
       },
       {
-        name: 'Copy to target location, and convert to link (apply to all)',
+        name: 'Copy to target location, and replace with a link (apply to all)',
         value: ChoiceOption.ReplaceAll,
       },
     ],
@@ -313,11 +312,11 @@ async function inquireExistingTargetEntityAction(
         value: ChoiceOption.SkipAll,
       },
       {
-        name: 'Replace target file/directory',
+        name: 'Replace',
         value: ChoiceOption.Replace,
       },
       {
-        name: 'Replace target file/directory (apply to all)',
+        name: 'Replace (apply to all)',
         value: ChoiceOption.ReplaceAll,
       },
     ],
