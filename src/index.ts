@@ -228,7 +228,7 @@ async function inquireRootDir() {
   return answers.rootDir;
 }
 
-async function inquireExistingSyncEntityAction(
+let inquireExistingSyncEntityAction = async function(
   linkGroupName: string,
   linkPath: string,
 ) {
@@ -263,10 +263,15 @@ async function inquireExistingSyncEntityAction(
     ],
   });
 
-  return answers.linkPresentAction;
-}
+  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
+  if (foreverAnswers.includes(answers.linkPresentAction)) {
+    inquireExistingSyncEntityAction = async () => answers.linkPresentAction;
+  }
 
-async function inquireExistingTargetEntityAction(
+  return answers.linkPresentAction;
+};
+
+let inquireExistingTargetEntityAction = async function(
   linkGroupName: string,
   targetPath: string,
 ) {
@@ -276,7 +281,7 @@ async function inquireExistingTargetEntityAction(
     ${targetType} in your target path: ${tildify(targetPath)}`);
 
   const answers = await inquirer.prompt({
-    name: 'action',
+    name: 'targetPresentAction',
     message: 'What would you like to do?',
     type: 'list',
     choices: [
@@ -299,8 +304,13 @@ async function inquireExistingTargetEntityAction(
     ],
   });
 
-  return answers.action;
-}
+  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
+  if (foreverAnswers.includes(answers.targetPresentAction)) {
+    inquireExistingTargetEntityAction = async () => answers.targetPresentAction;
+  }
+
+  return answers.targetPresentAction;
+};
 
 function printPreQuestionMessage(message: string) {
   logger.print('\n' + chalk.blueBright(message));
