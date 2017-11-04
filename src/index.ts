@@ -32,6 +32,13 @@ interface LinkGroup {
   links: { [key: string]: string };
 }
 
+enum ChoiceOption {
+  Skip = 'Skip',
+  SkipAll = 'SkipAll',
+  Replace = 'Replace',
+  ReplaceAll = 'ReplaceAll',
+}
+
 /* ============================================================================
  * Main */
 
@@ -165,20 +172,19 @@ async function processLink(
       //   - replace (apply to all)`,
       // );
 
-      const answer = await inquireExistingSyncEntityAction(
+      const answers = await inquireExistingSyncEntityAction(
         linkGroupName,
         linkPath,
         targetPath,
       );
 
-      console.log('OK: ' + answer);
+      console.log('OK: ' + JSON.stringify(answers));
     }
   } else {
     // link does not exist
     console.log('LINK DOES NOT EXIST. CREATE IT!');
 
-    const x = await createLink(linkPath, targetPath);
-    console.log(x);
+    await createLink(linkPath, targetPath);
   }
 }
 
@@ -229,43 +235,57 @@ async function inquireExistingSyncEntityAction(
 
   const answers = await inquirer.prompt([
     {
-      name: 'action',
+      name: 'linkPresentAction',
       type: 'list',
       // todo: mm: use either file or directory, smartly
       message: `What would you like to do?`,
       choices: [
         {
           name: 'Ignore',
-          value: 'IGNORE',
+          value: ChoiceOption.Skip,
         },
         {
           name: 'Ignore (apply to all)',
-          value: 'IGNORE_ALL',
+          value: ChoiceOption.SkipAll,
         },
         {
           name: 'Copy to target location, and convert to link',
-          value: 'COPY_CONVERT',
+          value: ChoiceOption.Replace,
         },
         {
           name: 'Copy to target location, and convert to link (apply to all)',
-          value: 'COPY_CONVERT_ALL',
+          value: ChoiceOption.ReplaceAll,
         },
       ],
     },
     {
-      name: 'actionOnTargetConflict',
+      name: 'targetPresentAction',
       message: 'What would you like to do?',
       type: 'list',
       choices: [
-        'Skip',
-        'Skip (apply to all)',
-        'Replace target file/directory',
-        'Replace target file/directory (apply to all)',
+        {
+          name: 'Skip',
+          value: ChoiceOption.Skip,
+        },
+        {
+          name: 'Skip (apply to all)',
+          value: ChoiceOption.SkipAll,
+        },
+        {
+          name: 'Replace target file/directory',
+          value: ChoiceOption.Replace,
+        },
+        {
+          name: 'Replace target file/directory (apply to all)',
+          value: ChoiceOption.ReplaceAll,
+        },
       ],
       when: answers => {
         if (
-          fs.existsSync(targetPath) &&
-          answers.action.indexOf('COPY_CONVERT') === 0
+          [ChoiceOption.Replace, ChoiceOption.ReplaceAll].includes(
+            answers.linkPresentAction,
+          ) &&
+          fs.existsSync(targetPath)
         ) {
           let targetType = fs.statSync(targetPath).isDirectory()
             ? 'directory'
@@ -282,7 +302,10 @@ async function inquireExistingSyncEntityAction(
     },
   ]);
 
-  return answers.action;
+  return answers as {
+    linkPresentAction: ChoiceOption;
+    targetPresentAction?: ChoiceOption;
+  };
 }
 
 function printPreQuestionMessage(message: string) {
