@@ -146,15 +146,15 @@ async function processLink(
         skip = true;
       } else {
         // links to a different target than desired
-        const linkAction = await inquireExistingLinkToAnotherTargetAction(
+        const action = await inquireExistingLinkToAnotherTargetAction(
           linkGroupName,
           linkPath,
           currentTarget,
         );
 
         if (
-          linkAction === ChoiceOption.Replace ||
-          linkAction === ChoiceOption.ReplaceAll
+          action === ChoiceOption.Replace ||
+          action === ChoiceOption.ReplaceAll
         ) {
           fs.removeSync(linkPath);
         } else {
@@ -162,14 +162,14 @@ async function processLink(
         }
       }
     } else {
-      const linkAction = await inquireExistingSyncEntityAction(
+      const action = await inquireExistingSyncEntityAction(
         linkGroupName,
         linkPath,
       );
 
       if (
-        linkAction === ChoiceOption.Replace ||
-        linkAction === ChoiceOption.ReplaceAll
+        action === ChoiceOption.Replace ||
+        action === ChoiceOption.ReplaceAll
       ) {
         // we're moving the entity at link location to the target location,
         // then creating a symbolic link in place of it to the target
@@ -245,7 +245,7 @@ let inquireExistingLinkToAnotherTargetAction = async function(
     but it points to a different ${type}: ${tildify(currentTarget)}`);
 
   const answers = await inquirer.prompt({
-    name: 'choice',
+    name: 'action',
     type: 'list',
     // todo: mm: use either file or directory, smartly
     message: `What would you like to do?`,
@@ -270,11 +270,11 @@ let inquireExistingLinkToAnotherTargetAction = async function(
   });
 
   const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
-  if (foreverAnswers.includes(answers.choice)) {
-    inquireExistingLinkToAnotherTargetAction = async () => answers.choice;
+  if (foreverAnswers.includes(answers.action)) {
+    inquireExistingLinkToAnotherTargetAction = async () => answers.action;
   }
 
-  return answers.choice;
+  return answers.action;
 };
 
 let inquireExistingSyncEntityAction = async function(
@@ -288,7 +288,7 @@ let inquireExistingSyncEntityAction = async function(
     ${tildify(linkPath)}.`);
 
   const answers = await inquirer.prompt({
-    name: 'linkPresentAction',
+    name: 'action',
     type: 'list',
     // todo: mm: use either file or directory, smartly
     message: `What would you like to do?`,
@@ -313,11 +313,11 @@ let inquireExistingSyncEntityAction = async function(
   });
 
   const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
-  if (foreverAnswers.includes(answers.linkPresentAction)) {
-    inquireExistingSyncEntityAction = async () => answers.linkPresentAction;
+  if (foreverAnswers.includes(answers.action)) {
+    inquireExistingSyncEntityAction = async () => answers.action;
   }
 
-  return answers.linkPresentAction;
+  return answers.action;
 };
 
 let inquireExistingTargetEntityAction = async function(
@@ -330,7 +330,7 @@ let inquireExistingTargetEntityAction = async function(
     ${targetType} in your target path: ${tildify(targetPath)}`);
 
   const answers = await inquirer.prompt({
-    name: 'targetPresentAction',
+    name: 'action',
     message: 'What would you like to do?',
     type: 'list',
     choices: [
@@ -354,11 +354,11 @@ let inquireExistingTargetEntityAction = async function(
   });
 
   const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
-  if (foreverAnswers.includes(answers.targetPresentAction)) {
-    inquireExistingTargetEntityAction = async () => answers.targetPresentAction;
+  if (foreverAnswers.includes(answers.action)) {
+    inquireExistingTargetEntityAction = async () => answers.action;
   }
 
-  return answers.targetPresentAction;
+  return answers.action;
 };
 
 function printPreQuestionMessage(message: string) {
