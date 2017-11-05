@@ -14,6 +14,11 @@ const logger = Logger({
   coloredOutput: true,
 });
 
+let totalCreated = 0;
+let totalSkippedByChoice = 0;
+let totalSkippedMissingTarget = 0;
+let totalSkippedExisting = 0;
+
 main();
 
 /* ============================================================================
@@ -51,6 +56,9 @@ async function main() {
     console.log();
     await processLinks(linkGroups[i]);
   }
+
+  console.log();
+  printFinalTotals();
 
   console.log();
 }
@@ -144,6 +152,7 @@ async function processLink(
       if (currentTarget === targetPath) {
         // already links to the desired target
         skip = true;
+        totalSkippedExisting++;
       } else {
         // links to a different target than desired
         const action = await inquireExistingLinkToAnotherTargetAction(
@@ -159,6 +168,7 @@ async function processLink(
           fs.removeSync(linkPath);
         } else {
           skip = true;
+          totalSkippedByChoice++;
         }
       }
     } else {
@@ -189,6 +199,7 @@ async function processLink(
             fs.renameSync(targetPath, targetPath + '.livelink.original');
           } else {
             skip = true;
+            totalSkippedByChoice++;
           }
         }
 
@@ -197,12 +208,19 @@ async function processLink(
         }
       } else {
         skip = true;
+        totalSkippedByChoice++;
       }
     }
   }
 
+  if (!fs.existsSync(targetPath)) {
+    skip = true;
+    totalSkippedMissingTarget++;
+  }
+
   if (!skip) {
     await fs.ensureSymlink(targetPath, linkPath);
+    totalCreated++;
   }
 }
 
@@ -363,4 +381,11 @@ let inquireExistingTargetEntityAction = async function(
 
 function printPreQuestionMessage(message: string) {
   logger.print('\n' + chalk.blueBright(`\u2139 ${message}`));
+}
+
+function printFinalTotals() {
+  logger.success('Links unchanged:', totalSkippedExisting);
+  logger.success('New links created:', totalCreated);
+  logger.success('Skipped by choice:', totalSkippedByChoice);
+  logger.success('Skipped due to missing target:', totalSkippedMissingTarget);
 }
