@@ -146,15 +146,20 @@ async function processLink(
         skip = true;
       } else {
         // links to a different target than desired
-        console.log(
-          'LINKED TO SOMETHING ELSE:',
+        const linkAction = await inquireExistingLinkToAnotherTargetAction(
+          linkGroupName,
+          linkPath,
           currentTarget,
-          ` - Prompt the user about what to do about it. options:
-        - point to the new target
-        - point to the new target (apply to all)
-        - leave the current target intact
-        - leave the current target intact (apply to all)`,
         );
+
+        if (
+          linkAction === ChoiceOption.Replace ||
+          linkAction === ChoiceOption.ReplaceAll
+        ) {
+          fs.removeSync(linkPath);
+        } else {
+          skip = true;
+        }
       }
     } else {
       const linkAction = await inquireExistingSyncEntityAction(
@@ -228,13 +233,57 @@ async function inquireRootDir() {
   return answers.rootDir;
 }
 
+let inquireExistingLinkToAnotherTargetAction = async function(
+  linkGroupName: string,
+  linkPath: string,
+  currentTarget: string,
+) {
+  const type = fs.statSync(currentTarget).isDirectory() ? 'directory' : 'file';
+
+  printPreQuestionMessage(oneLine`
+    There is already a link for ${linkGroupName} in your sync directory,
+    but it points to a different ${type}: ${tildify(currentTarget)}`);
+
+  const answers = await inquirer.prompt({
+    name: 'choice',
+    type: 'list',
+    // todo: mm: use either file or directory, smartly
+    message: `What would you like to do?`,
+    choices: [
+      {
+        name: 'Skip',
+        value: ChoiceOption.Skip,
+      },
+      {
+        name: 'Skip (apply to all)',
+        value: ChoiceOption.SkipAll,
+      },
+      {
+        name: 'Replace with link to the new target',
+        value: ChoiceOption.Replace,
+      },
+      {
+        name: 'Replace with link to the new target (apply to all)',
+        value: ChoiceOption.ReplaceAll,
+      },
+    ],
+  });
+
+  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
+  if (foreverAnswers.includes(answers.choice)) {
+    inquireExistingLinkToAnotherTargetAction = async () => answers.choice;
+  }
+
+  return answers.choice;
+};
+
 let inquireExistingSyncEntityAction = async function(
   linkGroupName: string,
   linkPath: string,
 ) {
   const type = fs.statSync(linkPath).isDirectory() ? 'directory' : 'file';
 
-  printPreQuestionMessage(oneLine`\u2139 There is already an actual ${type}
+  printPreQuestionMessage(oneLine`There is already an actual ${type}
     in place of the link for ${linkGroupName} in your sync directory:
     ${tildify(linkPath)}.`);
 
@@ -277,7 +326,7 @@ let inquireExistingTargetEntityAction = async function(
 ) {
   let targetType = fs.statSync(targetPath).isDirectory() ? 'directory' : 'file';
 
-  printPreQuestionMessage(oneLine`\u2139 There is already a
+  printPreQuestionMessage(oneLine`There is already a
     ${targetType} in your target path: ${tildify(targetPath)}`);
 
   const answers = await inquirer.prompt({
@@ -313,5 +362,5 @@ let inquireExistingTargetEntityAction = async function(
 };
 
 function printPreQuestionMessage(message: string) {
-  logger.print('\n' + chalk.blueBright(message));
+  logger.print('\n' + chalk.blueBright(`\u2139 ${message}`));
 }
