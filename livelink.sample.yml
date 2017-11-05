@@ -1,0 +1,78 @@
+Adobe:
+  - ~/Library/Application Support/Adobe/CameraRaw
+  - ~/Library/Application Support/Adobe/Lightroom
+  - ~/Library/Preferences/com.adobe.Lightroom6.plist
+  - ~/Library/Preferences/com.adobe.Photoshop.plist
+Amphetamine:
+  - ~/Library/Containers/com.if.Amphetamine/Data/Library/Preferences/com.if.Amphetamine.plist
+AppCleaner:
+  - ~/Library/Preferences/net.freemacsoft.AppCleaner.plist
+BetterTouchTool:
+  - ~/Library/Preferences/com.hegenberg.BetterTouchTool.plist
+Cyberduck:
+  - ~/Library/Preferences/ch.sudo.cyberduck.plist
+Docker:
+  - ~/.docker
+  - ~/.docker/config.json
+Flux:
+  - ~/Library/Preferences/org.herf.Flux.plist
+Kaleidoscope:
+  - ~/Library/Application Support/Kaleidoscope
+  - ~/Library/Preferences/com.blackpixel.kaleidoscope.plist
+Messages:
+  - ~/Library/Preferences/com.apple.iChat.AIM.plist
+  - ~/Library/Preferences/com.apple.iChat.Jabber.plist
+  - ~/Library/Preferences/com.apple.iChat.StatusMessages.plist
+Microsoft Remote Desktop:
+  - ~/Library/Containers/com.microsoft.rdc.mac/Data/Library/Preferences/com.microsoft.rdc.mac.plist
+Node:
+  - ~/.npmrc
+Path Finder:
+  - ~/Library/Application Support/Path Finder/PlugIns
+  - ~/Library/Application Support/Path Finder/Settings
+  - ~/Library/Preferences/com.cocoatech.PathFinder.plist
+Sketch:
+  - ~/Library/Application Support/com.bohemiancoding.sketch3
+  - ~/Library/Preferences/com.bohemiancoding.sketch3.plist
+SourceTree:
+  - ~/Library/Application Support/SourceTree/browser.plist
+  - ~/Library/Application Support/SourceTree/hgrc_sourcetree
+  - ~/Library/Application Support/SourceTree/sourcetree.license
+Spark:
+  - ~/Library/Application Support/Spark
+Spotify:
+  - ~/Library/Preferences/com.spotify.client.plist
+System:
+  - ~/Library/ColorSync/Profiles
+  - ~/Library/KeyBindings/DefaultKeyBinding.dict
+  - ~/Library/Preferences/com.apple.symbolichotkeys.plist
+Terminal:
+  - ~/Library/Preferences/com.apple.Terminal.plist
+Tower:
+  - ~/Library/Application Support/com.fournova.Tower2
+  - ~/Library/Preferences/com.fournova.Tower2.plist
+Transmission:
+  - ~/Library/Preferences/org.m0k.transmission.plist
+Scripting:
+  - ~/.bash_profile
+  - ~/.bashrc
+  - ~/.inputrc
+  - ~/.oh-my-zsh/custom
+  - ~/.profile
+  - ~/.zpreztorc
+  - ~/.zprofile
+  - ~/.zshrc
+SSH:
+  - ~/.ssh
+VCS:
+  - ~/.gitconfig
+  - ~/.hgignore_global
+VSCode:
+  - ~/Library/Application Support/Code/User
+VLC:
+  - ~/Library/Application Support/org.videolan.vlc
+  - ~/Library/Preferences/org.videolan.vlc
+  - ~/Library/Preferences/org.videolan.vlc.plist
+Xcode:
+  - ~/Library/Developer/Xcode/UserData/KeyBindings
+  - ~/Library/Preferences/com.apple.dt.Xcode.plist
