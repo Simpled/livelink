@@ -25,9 +25,7 @@ main();
  * Interfaces */
 
 interface LiveLinkConfig {
-  items: {
-    [name: string]: string[];
-  };
+  [name: string]: string[];
 }
 
 interface LinkGroup {
@@ -94,10 +92,10 @@ function loadYamlConfig(rootDir: string): LiveLinkConfig {
 }
 
 function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
-  const items: LinkGroup[] = Object.keys(config.items).map(name => {
+  const items: LinkGroup[] = Object.keys(config).map(name => {
     const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
 
-    const links = config.items[name].reduce((acc, bakPath) => {
+    const links = config[name].reduce((acc, bakPath) => {
       const resolvedPath = resolveFullPath(bakPath);
       const linkFileName = filenamify(resolvedPath).toLowerCase();
 
