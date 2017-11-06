@@ -93,27 +93,29 @@ function loadYamlConfig(rootDir: string): LiveLinkConfig {
 }
 
 function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
-  const items: LinkGroup[] = Object.keys(config).map(name => {
-    const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
+  return _(config)
+    .keys()
+    .sort()
+    .map(name => {
+      const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
 
-    const links = _(config[name])
-      .map(targetGlob => resolveFullPath(targetGlob))
-      .map(fullTargetGlob => glob.sync(fullTargetGlob))
-      .flatten()
-      .uniq()
-      .reduce((acc, targetPath) => {
-        const linkFileName = filenamify(targetPath).toLowerCase();
+      const links = _(config[name])
+        .map(targetGlob => resolveFullPath(targetGlob))
+        .map(fullTargetGlob => glob.sync(fullTargetGlob))
+        .flatten()
+        .uniq()
+        .reduce((acc, targetPath) => {
+          const linkFileName = filenamify(targetPath).toLowerCase();
 
-        return {
-          ...acc,
-          [linkFileName]: targetPath,
-        };
-      }, {});
+          return {
+            ...acc,
+            [linkFileName]: targetPath,
+          };
+        }, {});
 
-    return { name, syncDir, links };
-  });
-
-  return items;
+      return { name, syncDir, links };
+    })
+    .value();
 }
 
 async function processLinks(group: LinkGroup) {
