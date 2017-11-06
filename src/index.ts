@@ -2,11 +2,13 @@ import chalk from 'chalk';
 import { oneLine } from 'common-tags';
 import * as filenamify from 'filenamify';
 import * as fs from 'fs-extra';
+import * as glob from 'glob';
 import * as inquirer from 'inquirer';
 import * as path from 'path';
 import * as yaml from 'yamljs';
-import expandTilde = require('expand-tilde');
+import * as _ from 'lodash';
 import Logger = require('clix-logger');
+import expandTilde = require('expand-tilde');
 import tildify = require('tildify');
 
 const logger = Logger({
@@ -16,7 +18,6 @@ const logger = Logger({
 
 let totalCreated = 0;
 let totalSkippedByChoice = 0;
-let totalSkippedMissingTarget = 0;
 let totalSkippedExisting = 0;
 
 main();
@@ -95,15 +96,19 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
   const items: LinkGroup[] = Object.keys(config).map(name => {
     const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
 
-    const links = config[name].reduce((acc, bakPath) => {
-      const resolvedPath = resolveFullPath(bakPath);
-      const linkFileName = filenamify(resolvedPath).toLowerCase();
+    const links = _(config[name])
+      .map(targetGlob => resolveFullPath(targetGlob))
+      .map(fullTargetGlob => glob.sync(fullTargetGlob))
+      .flatten()
+      .uniq()
+      .reduce((acc, targetPath) => {
+        const linkFileName = filenamify(targetPath).toLowerCase();
 
-      return {
-        ...acc,
-        [linkFileName]: resolvedPath,
-      };
-    }, {});
+        return {
+          ...acc,
+          [linkFileName]: targetPath,
+        };
+      }, {});
 
     return { name, syncDir, links };
   });
@@ -211,11 +216,6 @@ async function processLink(
     }
   }
 
-  if (!fs.existsSync(targetPath)) {
-    skip = true;
-    totalSkippedMissingTarget++;
-  }
-
   if (!skip) {
     await fs.ensureSymlink(targetPath, linkPath);
     totalCreated++;
@@ -263,7 +263,6 @@ let inquireExistingLinkToAnotherTargetAction = async function(
   const answers = await inquirer.prompt({
     name: 'action',
     type: 'list',
-    // todo: mm: use either file or directory, smartly
     message: `What would you like to do?`,
     choices: [
       {
@@ -306,7 +305,6 @@ let inquireExistingSyncEntityAction = async function(
   const answers = await inquirer.prompt({
     name: 'action',
     type: 'list',
-    // todo: mm: use either file or directory, smartly
     message: `What would you like to do?`,
     choices: [
       {
@@ -385,5 +383,4 @@ function printFinalTotals() {
   logger.success('Links unchanged:', totalSkippedExisting);
   logger.success('New links created:', totalCreated);
   logger.success('Skipped by choice:', totalSkippedByChoice);
-  logger.success('Skipped due to missing target:', totalSkippedMissingTarget);
 }
