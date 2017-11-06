@@ -47,8 +47,9 @@ enum ChoiceOption {
 
 async function main() {
   const rootDir = await inquireRootDir();
+  const configPath = await inquireConfigPath(rootDir);
 
-  const config = loadYamlConfig(rootDir);
+  const config = yaml.load(configPath);
   const linkGroups = generateLinkGroups(rootDir, config);
 
   for (let i = 0; i < linkGroups.length; i++) {
@@ -69,10 +70,6 @@ function resolveFullPath(somePath: string) {
   return path.resolve(expandTilde(somePath));
 }
 
-function resolveYamlConfigPath(rootDir: string) {
-  return resolveFullPath(path.join(rootDir, 'livelink.yml'));
-}
-
 function getStat(somePath: string) {
   try {
     return fs.lstatSync(somePath);
@@ -81,23 +78,12 @@ function getStat(somePath: string) {
   }
 }
 
-function loadYamlConfig(rootDir: string): LiveLinkConfig {
-  const yamlPath = resolveYamlConfigPath(rootDir);
-
-  if (!fs.existsSync(yamlPath)) {
-    logger.error('No configuration file found at', yamlPath);
-    process.exit(1);
-  }
-
-  return yaml.load(yamlPath);
-}
-
 function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
   return _(config)
     .keys()
     .sort()
     .map(name => {
-      const syncDir = resolveFullPath(path.join(rootDir, 'links', name));
+      const syncDir = resolveFullPath(path.join(rootDir, name));
 
       const links = _(config[name])
         .map(targetGlob => resolveFullPath(targetGlob))
@@ -201,7 +187,7 @@ async function processLink(
             targetAction === ChoiceOption.Replace ||
             targetAction === ChoiceOption.ReplaceAll
           ) {
-            fs.renameSync(targetPath, targetPath + '.livelink.original');
+            fs.renameSync(targetPath, '.livelink-' + targetPath + '-original');
           } else {
             skip = true;
             totalSkippedByChoice++;
@@ -227,7 +213,7 @@ async function processLink(
 async function inquireRootDir() {
   const answers = await inquirer.prompt({
     name: 'rootDir',
-    message: 'Enter your LiveLink sync directory',
+    message: 'Enter path to your sync directory:',
     default: tildify(process.cwd()),
     validate: dir => {
       const resolvedRoot = resolveFullPath(dir);
@@ -238,17 +224,36 @@ async function inquireRootDir() {
         return `Invalid directory: ${tildify(resolvedRoot)}`;
       }
 
-      const configPath = resolveYamlConfigPath(resolvedRoot);
+      return true;
+    },
+  });
 
-      if (!fs.existsSync(configPath)) {
-        return `No configuration file found at: ${tildify(configPath)}`;
+  return answers.rootDir;
+}
+
+async function inquireConfigPath(rootDir: string) {
+  const answers = await inquirer.prompt({
+    name: 'configPath',
+    message: 'Enter path to your YAML configuration file:',
+    default: tildify(path.join(rootDir, 'livelink.yml')),
+    validate: configPath => {
+      const resolvedPath = resolveFullPath(configPath);
+
+      if (!fs.existsSync(resolvedPath)) {
+        return `No such file found: ${tildify(resolvedPath)}`;
+      }
+
+      try {
+        yaml.load(resolvedPath);
+      } catch {
+        return `Not a valid YAML file: ${tildify(resolvedPath)}`;
       }
 
       return true;
     },
   });
 
-  return answers.rootDir;
+  return resolveFullPath(answers.configPath);
 }
 
 let inquireExistingLinkToAnotherTargetAction = async function(
