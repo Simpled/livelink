@@ -89,7 +89,15 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
 
       const links = _(config[name])
         .map(targetGlob => resolveFullPath(targetGlob))
-        .map(fullTargetGlob => glob.sync(fullTargetGlob))
+        .map(fullTargetGlob => [
+          // matching files and directories in the target path
+          ...glob.sync(fullTargetGlob),
+
+          // matching files and directories relative to the sync directory
+          ...glob
+            .sync(path.join(syncDir, fullTargetGlob))
+            .map(p => p.replace(syncDir, '')),
+        ])
         .flatten()
         .uniq()
         .filter(targetPath => {
@@ -106,10 +114,7 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
         .reduce((acc, targetPath) => {
           const linkFileName = targetPath;
 
-          return {
-            ...acc,
-            [linkFileName]: targetPath,
-          };
+          return { ...acc, [linkFileName]: targetPath };
         }, {});
 
       return { name, syncDir, links };
@@ -234,6 +239,11 @@ async function processLink(
         totalSkippedByChoice++;
       }
     }
+  }
+
+  if (!skip && !fs.existsSync(targetPath)) {
+    skip = true;
+    totalSkippedMissingTarget++;
   }
 
   if (!skip) {
