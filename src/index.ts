@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import { oneLine } from 'common-tags';
-import * as filenamify from 'filenamify';
 import * as fs from 'fs-extra';
 import * as glob from 'glob';
 import * as inquirer from 'inquirer';
@@ -102,7 +101,7 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
           return !isCyclic;
         })
         .reduce((acc, targetPath) => {
-          const linkFileName = filenamify(targetPath).toLowerCase();
+          const linkFileName = targetPath;
 
           return {
             ...acc,
@@ -198,7 +197,7 @@ async function processLink(
             targetAction === ChoiceOption.Replace ||
             targetAction === ChoiceOption.ReplaceAll
           ) {
-            fs.renameSync(targetPath, '.livelink-' + targetPath + '-original');
+            fs.renameSync(targetPath, targetPath + '.livelink.original');
           } else {
             skip = true;
             totalSkippedByChoice++;

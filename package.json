@@ -3,22 +3,15 @@
   "main": "dist/index.js",
   "private": true,
   "dependencies": {
-    "@types/filenamify": "^2.0.1",
-    "@types/inquirer": "^0.0.35",
-    "@types/lodash": "^4.14.82",
-    "@types/yamljs": "^0.2.30",
     "chalk": "^2.3.0",
     "clix-logger": "^1.0.0",
     "common-tags": "^1.4.0",
     "eazy-logger": "^3.0.2",
-    "ee-log": "^2.0.4",
     "expand-tilde": "^2.0.2",
-    "filenamify": "^2.0.0",
     "fs-extra": "^4.0.2",
     "glob": "^7.1.2",
     "inquirer": "^3.3.0",
     "lodash": "^4.17.4",
-    "loggy": "^1.0.2",
     "tildify": "^1.2.0",
     "yamljs": "^0.3.0"
   },
@@ -27,7 +20,10 @@
     "@types/common-tags": "^1.4.0",
     "@types/fs-extra": "^4.0.3",
     "@types/glob": "^5.0.33",
+    "@types/inquirer": "^0.0.35",
+    "@types/lodash": "^4.14.82",
     "@types/node": "^8.0.47",
+    "@types/yamljs": "^0.2.30",
     "typescript": "^2.6.1"
   }
 }
