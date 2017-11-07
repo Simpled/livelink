@@ -446,8 +446,16 @@ function printPreQuestionMessage(message: string) {
 function printFinalTotals() {
   logger.success('Links unchanged:', totalSkippedExisting);
   logger.success('New links created:', totalCreated);
-  logger.success('Skipped (by your choice):', totalSkippedByChoice);
-  logger.success('Skipped (missing target):', totalSkippedMissingTarget);
+
+  logger[totalSkippedByChoice ? 'warn' : 'success'](
+    'Skipped (by your choice):',
+    totalSkippedByChoice,
+  );
+
+  logger[totalSkippedMissingTarget ? 'warn' : 'success'](
+    'Skipped (missing target):',
+    totalSkippedMissingTarget,
+  );
 }
 
 function isSameOrSubpath(subpath: string, parent: string) {
