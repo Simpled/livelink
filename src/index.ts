@@ -90,6 +90,17 @@ function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
         .map(fullTargetGlob => glob.sync(fullTargetGlob))
         .flatten()
         .uniq()
+        .filter(targetPath => {
+          const isCyclic = isSameOrSubpath(syncDir, targetPath);
+
+          if (isCyclic) {
+            logger.warn(
+              oneLine`Ignoring cyclic path caused by ${name}: ${targetPath}`,
+            );
+          }
+
+          return !isCyclic;
+        })
         .reduce((acc, targetPath) => {
           const linkFileName = filenamify(targetPath).toLowerCase();
 
@@ -390,4 +401,14 @@ function printFinalTotals() {
   logger.success('Links unchanged:', totalSkippedExisting);
   logger.success('New links created:', totalCreated);
   logger.success('Skipped by choice:', totalSkippedByChoice);
+}
+
+function isSameOrSubpath(subpath: string, parent: string) {
+  const noTrailingSep = (p: string) =>
+    p[p.length - 1] === path.sep ? p.substr(0, p.length - 1) : p;
+
+  const parentParts = noTrailingSep(parent).split(path.sep);
+  const subpathParts = noTrailingSep(subpath).split(path.sep);
+
+  return parentParts.every((part, pos) => subpathParts[pos] === part);
 }
