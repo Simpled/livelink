@@ -18,6 +18,7 @@ const logger = Logger({
 let totalCreated = 0;
 let totalSkippedByChoice = 0;
 let totalSkippedExisting = 0;
+let totalSkippedMissingTarget = 0;
 
 main();
 
@@ -35,10 +36,12 @@ interface LinkGroup {
 }
 
 enum ChoiceOption {
-  Skip = 'Skip',
-  SkipAll = 'SkipAll',
+  MoveRelink = 'MoveRelink',
+  MoveRelinkAll = 'MoveRelinkAll',
   Replace = 'Replace',
   ReplaceAll = 'ReplaceAll',
+  Skip = 'Skip',
+  SkipAll = 'SkipAll',
 }
 
 /* ============================================================================
@@ -166,7 +169,12 @@ async function processLink(
           action === ChoiceOption.Replace ||
           action === ChoiceOption.ReplaceAll
         ) {
-          fs.removeSync(linkPath);
+          if (fs.existsSync(targetPath)) {
+            fs.removeSync(linkPath);
+          } else {
+            skip = true;
+            totalSkippedMissingTarget++;
+          }
         } else {
           skip = true;
           totalSkippedByChoice++;
@@ -181,6 +189,18 @@ async function processLink(
       if (
         action === ChoiceOption.Replace ||
         action === ChoiceOption.ReplaceAll
+      ) {
+        if (fs.existsSync(targetPath)) {
+          fs.removeSync(linkPath);
+        } else {
+          skip = true;
+          totalSkippedMissingTarget++;
+        }
+      }
+
+      if (
+        action === ChoiceOption.MoveRelink ||
+        action === ChoiceOption.MoveRelinkAll
       ) {
         // we're moving the entity at link location to the target location,
         // then creating a symbolic link in place of it to the target
@@ -207,7 +227,9 @@ async function processLink(
         if (!skip) {
           fs.moveSync(linkPath, targetPath);
         }
-      } else {
+      }
+
+      if (action === ChoiceOption.Skip || action === ChoiceOption.SkipAll) {
         skip = true;
         totalSkippedByChoice++;
       }
@@ -287,7 +309,7 @@ let inquireExistingLinkToAnotherTargetAction = async function(
         value: ChoiceOption.Skip,
       },
       {
-        name: 'Skip (apply to all)',
+        name: 'Skip (Apply to all)',
         value: ChoiceOption.SkipAll,
       },
       {
@@ -295,13 +317,18 @@ let inquireExistingLinkToAnotherTargetAction = async function(
         value: ChoiceOption.Replace,
       },
       {
-        name: 'Replace with link to the new target (apply to all)',
+        name: 'Replace with link to the new target (Apply to all)',
         value: ChoiceOption.ReplaceAll,
       },
     ],
   });
 
-  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
+  const foreverAnswers = [
+    ChoiceOption.MoveRelinkAll,
+    ChoiceOption.ReplaceAll,
+    ChoiceOption.SkipAll,
+  ];
+
   if (foreverAnswers.includes(answers.action)) {
     inquireExistingLinkToAnotherTargetAction = async () => answers.action;
   }
@@ -329,16 +356,26 @@ let inquireExistingSyncEntityAction = async function(
         value: ChoiceOption.Skip,
       },
       {
-        name: 'Ignore (apply to all)',
+        name: 'Ignore (Apply to all)',
         value: ChoiceOption.SkipAll,
       },
       {
-        name: 'Copy to target location, and replace with a link',
+        name: `Replace with a link to the target ${type}`,
         value: ChoiceOption.Replace,
       },
       {
-        name: 'Copy to target location, and replace with a link (apply to all)',
+        name: `Replace with a link to the target ${type} (Apply to all)`,
         value: ChoiceOption.ReplaceAll,
+      },
+      {
+        name: oneLine`Move the ${type} to the target location,
+                      then create a link to that ${type}`,
+        value: ChoiceOption.MoveRelink,
+      },
+      {
+        name: oneLine`Move the ${type} to the target location,
+                      then create a link to that ${type} (Apply to all)`,
+        value: ChoiceOption.MoveRelinkAll,
       },
     ],
   });
@@ -370,7 +407,7 @@ let inquireExistingTargetEntityAction = async function(
         value: ChoiceOption.Skip,
       },
       {
-        name: 'Skip (apply to all)',
+        name: 'Skip (Apply to all)',
         value: ChoiceOption.SkipAll,
       },
       {
@@ -378,7 +415,7 @@ let inquireExistingTargetEntityAction = async function(
         value: ChoiceOption.Replace,
       },
       {
-        name: 'Replace (apply to all)',
+        name: 'Replace (Apply to all)',
         value: ChoiceOption.ReplaceAll,
       },
     ],
@@ -399,7 +436,8 @@ function printPreQuestionMessage(message: string) {
 function printFinalTotals() {
   logger.success('Links unchanged:', totalSkippedExisting);
   logger.success('New links created:', totalCreated);
-  logger.success('Skipped by choice:', totalSkippedByChoice);
+  logger.success('Skipped (by your choice):', totalSkippedByChoice);
+  logger.success('Skipped (missing target):', totalSkippedMissingTarget);
 }
 
 function isSameOrSubpath(subpath: string, parent: string) {
