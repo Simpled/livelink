@@ -87,7 +87,7 @@ function getStat(somePath: string) {
 function generateLinkGroups(rootDir: string, config: LiveLinkConfig) {
   return _(config)
     .keys()
-    .sort()
+    .sort((x, y) => (x.toUpperCase() < y.toUpperCase() ? -1 : 1))
     .map(name => {
       const syncDir = resolveFullPath(path.join(rootDir, name));
 
