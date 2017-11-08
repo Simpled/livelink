@@ -44,6 +44,10 @@ enum ChoiceOption {
   SkipAll = 'SkipAll',
 }
 
+enum NotableOutcome {
+  SkippedMissingTarget = 'Skipped (missing target)',
+}
+
 /* ============================================================================
  * Main */
 
@@ -132,7 +136,6 @@ async function processLinks(group: LinkGroup) {
     const targetPath = group.links[linkName];
     const linkPath = path.join(group.syncDir, linkName);
 
-    logger.subtle(`${linkPath} -> ${targetPath}`);
     await processLink(group.name, linkPath, targetPath);
   }
 }
@@ -143,6 +146,7 @@ async function processLink(
   targetPath: string,
 ) {
   let skip = false;
+  let notableOutcome: NotableOutcome | undefined;
   const stat = getStat(linkPath);
 
   if (stat) {
@@ -179,6 +183,7 @@ async function processLink(
           } else {
             skip = true;
             totalSkippedMissingTarget++;
+            notableOutcome = NotableOutcome.SkippedMissingTarget;
           }
         } else {
           skip = true;
@@ -199,6 +204,7 @@ async function processLink(
           fs.removeSync(linkPath);
         } else {
           skip = true;
+          notableOutcome = NotableOutcome.SkippedMissingTarget;
           totalSkippedMissingTarget++;
         }
       }
@@ -243,6 +249,7 @@ async function processLink(
 
   if (!skip && !fs.existsSync(targetPath)) {
     skip = true;
+    notableOutcome = NotableOutcome.SkippedMissingTarget;
     totalSkippedMissingTarget++;
   }
 
@@ -250,6 +257,14 @@ async function processLink(
     await fs.ensureSymlink(targetPath, linkPath);
     totalCreated++;
   }
+
+  let message = `${linkPath} -> ${targetPath}`;
+
+  if (notableOutcome) {
+    message = `${message} [${chalk.magentaBright(notableOutcome)}]`;
+  }
+
+  logger.subtle(message);
 }
 
 async function inquireRootDir() {
