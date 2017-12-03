@@ -51,6 +51,15 @@ enum NotableOutcome {
 }
 
 /* ============================================================================
+ * Constants, Helpers and Configs */
+
+const foreverAnswers = [
+  ChoiceOption.MoveRelinkAll,
+  ChoiceOption.ReplaceAll,
+  ChoiceOption.SkipAll,
+];
+
+/* ============================================================================
  * Main */
 
 async function main() {
@@ -350,12 +359,6 @@ let inquireExistingLinkToAnotherTargetAction = async function(
     ],
   });
 
-  const foreverAnswers = [
-    ChoiceOption.MoveRelinkAll,
-    ChoiceOption.ReplaceAll,
-    ChoiceOption.SkipAll,
-  ];
-
   if (foreverAnswers.includes(answers.action)) {
     inquireExistingLinkToAnotherTargetAction = async () => answers.action;
   }
@@ -407,7 +410,6 @@ let inquireExistingSyncEntityAction = async function(
     ],
   });
 
-  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
   if (foreverAnswers.includes(answers.action)) {
     inquireExistingSyncEntityAction = async () => answers.action;
   }
@@ -448,7 +450,6 @@ let inquireExistingTargetEntityAction = async function(
     ],
   });
 
-  const foreverAnswers = [ChoiceOption.ReplaceAll, ChoiceOption.SkipAll];
   if (foreverAnswers.includes(answers.action)) {
     inquireExistingTargetEntityAction = async () => answers.action;
   }
