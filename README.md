@@ -4,10 +4,16 @@ A simple file syncing script that generates symbolic links of files and folders,
 
 ## Usage
 
-Create a `livelink.yml` file in the directory in which you'd like to create your symbolic links. We call this the sync directory. Then run:
+Install `livelink` globally:
 
 ```
-node livelink
+npm i -g @simpled/livelink
 ```
 
-The script will ask you for the path to your sync folder. Just follow the prompts.
+Create a `livelink.yml` file somewhere, preferrably in your sync directory, the same directory where you'd like to create your symbolic links. You can use the [sample file](/livelink.sample.yml) as your starting point. Then run:
+
+```
+livelink
+```
+
+Follow the prompts.

@@ -1,11 +1,20 @@
 {
-  "name": "livelink",
+  "name": "@simpled/livelink",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simpled/livelink.git"
+  },
   "version": "0.0.1",
+  "files": ["dist"],
   "bin": {
     "livelink": "dist/index.js"
   },
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build"
+  },
   "dependencies": {
     "chalk": "^2.3.0",
     "clix-logger": "^1.0.0",
