@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import chalk from 'chalk';
 import { oneLine } from 'common-tags';
 import * as fs from 'fs-extra';

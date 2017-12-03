@@ -1,7 +1,11 @@
 {
   "name": "livelink",
   "main": "dist/index.js",
-  "private": true,
+  "version": "0.0.1",
+  "bin": {
+    "livelink": "dist/index.js"
+  },
+  "license": "MIT",
   "dependencies": {
     "chalk": "^2.3.0",
     "clix-logger": "^1.0.0",
